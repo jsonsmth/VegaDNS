@@ -62,9 +62,10 @@ if(!is_writable("$private_dirs/cache")) die("Error: $private_dirs/cache is not w
 // Setup a new "Web" Integration at DuoSec via https://www.duosecurity.com/docs/duoweb
 // install https://github.com/duosecurity/duo_php in the same directory as VegaDNS
 
+
 include('duo_php/duo_web.php');
 
-// input your Integration details from the DuoSec
+// input your Integration details from the DuoSec Admin Panel
 
 define('AKEY',"[put your AKEY here]"); //Application Secret Key from DuoSec Admin Panel
 define('IKEY',"[put your IKEY here]"); //Integration Key from DuoSec Admin Panel
