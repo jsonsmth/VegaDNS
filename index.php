@@ -59,6 +59,18 @@ if(!is_writable("$private_dirs/templates_c")) die("Error: $private_dirs/template
 if(!is_writable("$private_dirs/configs")) die("Error: $private_dirs/configs is not writabale.  Please read INSTALL");
 if(!is_writable("$private_dirs/cache")) die("Error: $private_dirs/cache is not writabale.  Please read INSTALL");
 
+// Setup a new "Web" Integration at DuoSec via https://www.duosecurity.com/docs/duoweb
+// install https://github.com/duosecurity/duo_php in the same directory as VegaDNS
+
+include('duo_php/duo_web.php');
+
+// input your Integration details from the DuoSec
+
+define('AKEY',"[put your AKEY here]"); //Application Secret Key from DuoSec Admin Panel
+define('IKEY',"[put your IKEY here]"); //Integration Key from DuoSec Admin Panel
+define('SKEY',"[put your SKEY here]"); //Secret key from DuoSec Admin Panel
+define('HOST',"[put your duosec HOST here]"); //API Hostname from DuoSec Admin Panel
+
 
 if(isset($_REQUEST['state']) && $_REQUEST['state'] == 'get_data') {
 
@@ -104,6 +116,18 @@ if(!isset($_REQUEST['state'])) {
         exit;
     }
 
+   // DUO SECURITY
+
+     if(isset($_POST['sig_response'])) { 
+        $resp = Duo::verifyResponse(IKEY, SKEY, AKEY, $_POST['sig_response']);
+        if($resp != NULL){
+               header("Location: ".$_SERVER['PHP_SELF']."?".SID."&state=logged_in");
+               exit;
+        }
+     }   
+
+
+
     // MAIN
 
     $smarty->display('header.tpl');
@@ -146,7 +170,26 @@ if(!isset($_REQUEST['state'])) {
             exit;
         }
         if($auth == "TRUE") {
-            header("Location: ".$_SERVER['PHP_SELF']."?".SID."&state=logged_in");
+
+
+
+          $sig_request = Duo::signRequest(IKEY, SKEY, AKEY, $_REQUEST['email']);
+
+?>
+           <script src="duo_php/js/Duo-Web-v1.bundled.min.js"></script>
+           <script>
+              Duo.init({
+                'host': <?php echo "'" . HOST . "'"; ?>,
+                'post_action':'index.php<?php echo "?" . SID; ?>',
+                'sig_request':<?php echo "'" . $sig_request . "'"; ?>
+            });
+            </script>
+
+            <iframe id="duo_iframe" width="620" height="500" frameborder="0" allowtransparency="true" style="background: transparent;"></iframe>
+
+<?php
+
+
             exit;
         } else {
             set_msg_err("Error signing on: incorrect email address or password<p><a href=".$_SERVER['PHP_SELF']."?".SID."&state=help>forgot your password?</a>");
